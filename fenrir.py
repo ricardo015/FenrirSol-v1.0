@@ -1,490 +1,152 @@
+# -*- coding: utf-8 -*-
 import subprocess
-
 import tkinter as tk
-
 from tkinter import messagebox
-
 import webbrowser
-
 import pyperclip
-
 import threading
-
 import time
-
 import re
 
-
-
-
-
-# Ejecutar el actualizador antes de iniciar la aplicaciÛn
-
+# Ejecutar el actualizador antes de iniciar la aplicaci√≥n
 def ejecutar_updater():
-
     """
-
-    Ejecuta el script updater.py para verificar y actualizar la aplicaciÛn.
-
+    Ejecuta el script updater.py para verificar y actualizar la aplicaci√≥n.
     """
-
     try:
-
         print("Verificando actualizaciones...")
-
         resultado = subprocess.run(["python", "updater.py"], check=True)
-
         if resultado.returncode == 0:
-
-            print("El actualizador se ejecutÛ correctamente.")
-
+            print("El actualizador se ejecut√≥ correctamente.")
         else:
-
             print("Hubo un problema con el actualizador.")
-
     except Exception as e:
-
         print(f"Error al ejecutar el actualizador: {e}")
 
-
-
-# Llamar al updater antes de iniciar la interfaz gr·fica
-
+# Llamar al updater antes de iniciar la interfaz gr√°fica
 ejecutar_updater()
 
-
-
-# Variables globales para controlar el estado del monitoreo
-
+# Variables globales para controlar el monitoreo
 monitoreo_activo = False
-
 contenido_anterior = ""
+contratos_abiertos = set()  # Para validar contratos √∫nicos
 
-contratos_abiertos = set()  # Para validar contratos ˙nicos
-
-
-
-# Resto de tu cÛdigo sigue igual...
-
-# AquÌ inicia tu funciÛn crear_interfaz() y dem·s funciones.
-
-
-
-# Variables globales para controlar el estado del monitoreo
-
-
-
-monitoreo_activo = False
-
-
-
-contenido_anterior = ""
-
-
-
-contratos_abiertos = set()  # Para validar contratos ˙nicos
-
-
-
-
-
-
-
-# Validar si el contrato es v·lido
-
-
-
+# Validar si el contrato es v√°lido
 def es_contrato_valido(contrato):
-
-
-
+    """
+    Verifica si el contrato cumple con el formato base58.
+    """
     base58_regex = r'^[A-HJ-NP-Za-km-z1-9]{32,44}$'
-
-
-
     return re.match(base58_regex, contrato) is not None
 
-
-
-
-
-
-
-# Abrir las p·ginas en Brave
-
-
-
+# Abrir las p√°ginas en Brave
 def abrir_paginas_brave(contrato):
-
-
-
+    """
+    Abre las p√°ginas relacionadas al contrato en el navegador Brave.
+    """
     urls = [
-
-
-
-       f"https://rugcheck.xyz/tokens/{contrato}",
-
-
-
-       f"https://bullx.io/terminal?chainId=1399811149&address={contrato}"
-
-
-
+        f"https://rugcheck.xyz/tokens/{contrato}",
+        f"https://bullx.io/terminal?chainId=1399811149&address={contrato}"
     ]
-
-
-
-
-
-
-
     brave_path = "C:/Program Files/BraveSoftware/Brave-Browser/Application/brave.exe"
-
-
-
     webbrowser.register('brave', None, webbrowser.BackgroundBrowser(brave_path))
-
-
-
-
-
-
-
     for url in urls:
-
-
-
         webbrowser.get('brave').open(url)
-
-
-
         time.sleep(1)
+    print(f"P√°ginas abiertas para el contrato: {contrato}")
 
-
-
-
-
-
-
-    print(f"P·ginas abiertas para el contrato: {contrato}")
-
-
-
-
-
-
-
-# FunciÛn para monitorear el portapapeles
-
-
-
+# Funci√≥n para monitorear el portapapeles
 def monitorear_portapapeles(texto_contrato):
-
-
-
+    """
+    Monitorea el portapapeles en busca de nuevos contratos v√°lidos.
+    """
     global monitoreo_activo, contenido_anterior, contratos_abiertos
 
-
-
-
-
-
-
     while monitoreo_activo:
-
-
-
         try:
-
-
-
             contenido_actual = pyperclip.paste().strip()
-
-
-
         except Exception as e:
-
-
-
             print(f"Error al leer el portapapeles: {e}")
-
-
-
             contenido_actual = ""
 
-
-
-
-
-
-
         if contenido_actual != contenido_anterior and contenido_actual:
-
-
-
             if es_contrato_valido(contenido_actual):
-
-
-
-                if contenido_actual not in contratos_abiertos:  # Validar contrato ˙nico
-
-
-
+                if contenido_actual not in contratos_abiertos:  # Validar contrato √∫nico
                     contenido_anterior = contenido_actual
-
-
-
                     contratos_abiertos.add(contenido_actual)
-
-
-
                     texto_contrato.set(f"Contrato detectado: {contenido_actual}")
-
-
-
                     print(f"Nuevo contrato detectado: {contenido_actual}")
-
-
-
                     abrir_paginas_brave(contenido_actual)
-
-
-
                 else:
-
-
-
                     texto_contrato.set("Contrato ya procesado.")
-
-
-
             else:
-
-
-
-                texto_contrato.set("El contenido copiado no es un contrato v·lido.")
-
-
-
-
-
-
+                texto_contrato.set("El contenido copiado no es un contrato v√°lido.")
 
         time.sleep(1)
 
-
-
-
-
-
-
 # Iniciar monitoreo
-
-
-
 def iniciar_monitoreo(texto_contrato):
-
-
-
+    """
+    Activa el monitoreo del portapapeles.
+    """
     global monitoreo_activo
-
-
-
     if not monitoreo_activo:
-
-
-
         monitoreo_activo = True
-
-
-
         texto_contrato.set("Monitoreo activado.")
-
-
-
         threading.Thread(target=monitorear_portapapeles, args=(texto_contrato,), daemon=True).start()
-
-
-
         messagebox.showinfo("Monitoreo", "El monitoreo del portapapeles ha comenzado.")
-
-
-
     else:
-
-
-
-        messagebox.showinfo("Monitoreo", "El monitoreo ya est· activo.")
-
-
-
-
-
-
+        messagebox.showinfo("Monitoreo", "El monitoreo ya est√° activo.")
 
 # Pausar monitoreo
-
-
-
 def pausar_monitoreo(texto_contrato):
-
-
-
+    """
+    Pausa el monitoreo del portapapeles.
+    """
     global monitoreo_activo
-
-
-
     if monitoreo_activo:
-
-
-
         monitoreo_activo = False
-
-
-
         texto_contrato.set("Monitoreo pausado.")
-
-
-
         messagebox.showinfo("Monitoreo", "El monitoreo del portapapeles se ha pausado.")
-
-
-
     else:
-
-
-
-        messagebox.showinfo("Monitoreo", "El monitoreo ya est· pausado.")
-
-
-
-
-
-
+        messagebox.showinfo("Monitoreo", "El monitoreo ya est√° pausado.")
 
 # Salir del programa
-
-
-
 def salir(ventana):
-
-
-
+    """
+    Cierra la aplicaci√≥n.
+    """
     global monitoreo_activo
-
-
-
     monitoreo_activo = False
-
-
-
     ventana.destroy()
 
-
-
-# Crear interfaz gr·fica
-
-
-
+# Crear interfaz gr√°fica
 def crear_interfaz():
-
-
-
+    """
+    Crea la interfaz gr√°fica principal de la aplicaci√≥n.
+    """
     ventana = tk.Tk()
-
-
-
     ventana.title("Fenrir v1.0 - Solana")
-
-
-
     ventana.geometry("400x200")
 
-
-
-    
-
-
-
     # Texto para mostrar el contrato detectado
-
-
-
     texto_contrato = tk.StringVar()
-
-
-
-    texto_contrato.set("Estado: Esperando contrato de solana...")
-
-
-
-
-
-
+    texto_contrato.set("Estado: Esperando contrato de Solana...")
 
     etiqueta_contrato = tk.Label(ventana, textvariable=texto_contrato, wraplength=380, justify="center")
-
-
-
     etiqueta_contrato.pack(pady=10)
 
-
-
-
-
-
-
     # Botones
-
-
-
     boton_iniciar = tk.Button(ventana, text="Iniciar Monitoreo", command=lambda: iniciar_monitoreo(texto_contrato), width=20)
-
-
-
     boton_iniciar.pack(pady=5)
 
-
-
-
-
-
-
     boton_pausar = tk.Button(ventana, text="Pausar Monitoreo", command=lambda: pausar_monitoreo(texto_contrato), width=20)
-
-
-
     boton_pausar.pack(pady=5)
 
-
-
-
-
-
-
     boton_salir = tk.Button(ventana, text="Salir", command=lambda: salir(ventana), width=20, bg="red", fg="white")
-
-
-
     boton_salir.pack(pady=10)
-
-
-
-
-
-
 
     ventana.mainloop()
 
-
-
-
-
-
-
 if __name__ == "__main__":
-
-
-
     crear_interfaz()
-
