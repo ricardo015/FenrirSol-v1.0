@@ -1,76 +1,246 @@
-import os
-import requests
-import subprocess
-import sys
+import tkinter as tk
 
-# Enlace RAW del archivo en GitHub
-URL_SCRIPT_REMOTO = "https://raw.githubusercontent.com/ricardo015/FenrirSol-v1.0/main/fenrir.py"
+from tkinter import messagebox
 
-# Nombre del archivo local y del ejecutable
-SCRIPT_LOCAL = "fenrir.py"
-EJECUTABLE = "fenrir.exe"
+import webbrowser
 
-def descargar_y_actualizar():
+import pyperclip
+
+import threading
+
+import time
+
+import re
+
+# Ejecutar el actualizador antes de iniciar la aplicación
+def ejecutar_updater():
     """
-    Descarga el archivo remoto y lo actualiza localmente si hay cambios.
+    Ejecuta el script updater.py para verificar y actualizar la aplicación.
     """
     try:
-        print("Verificando actualizaciones desde GitHub...")
-        respuesta = requests.get(URL_SCRIPT_REMOTO)
-        if respuesta.status_code == 200:
-            contenido_remoto = respuesta.text
+        print("Verificando actualizaciones...")
+        resultado = subprocess.run(["python", "updater.py"], check=True)
+        if resultado.returncode == 0:
+            print("El actualizador se ejecutó correctamente.")
         else:
-            print(f"Error al descargar el archivo remoto: {respuesta.status_code}")
-            return False
-
-        # Si el archivo local existe, comparar con el archivo remoto
-        if os.path.exists(SCRIPT_LOCAL):
-            with open(SCRIPT_LOCAL, "r") as archivo_local:
-                contenido_local = archivo_local.read()
-            if contenido_local == contenido_remoto:
-                print("El archivo local ya está actualizado.")
-                return False
-
-        # Actualizar el archivo local
-        with open(SCRIPT_LOCAL, "w") as archivo_local:
-            archivo_local.write(contenido_remoto)
-        print("El archivo local ha sido actualizado.")
-        return True
-
+            print("Hubo un problema con el actualizador.")
     except Exception as e:
-        print(f"Error durante la actualización: {e}")
-        return False
+        print(f"Error al ejecutar el actualizador: {e}")
 
-def regenerar_ejecutable():
-    """
-    Regenera el ejecutable usando PyInstaller.
-    """
-    comando_pyinstaller = [
-        "pyinstaller",
-        "--onefile",
-        "--noconsole",
-        SCRIPT_LOCAL
+# Llamar al updater antes de iniciar la interfaz gráfica
+ejecutar_updater()
+
+# Variables globales para controlar el estado del monitoreo
+monitoreo_activo = False
+contenido_anterior = ""
+contratos_abiertos = set()  # Para validar contratos únicos
+
+# Resto de tu código sigue igual...
+# Aquí inicia tu función crear_interfaz() y demás funciones.
+
+# Variables globales para controlar el estado del monitoreo
+
+monitoreo_activo = False
+
+contenido_anterior = ""
+
+contratos_abiertos = set()  # Para validar contratos únicos
+
+
+
+# Validar si el contrato es válido
+
+def es_contrato_valido(contrato):
+
+    base58_regex = r'^[A-HJ-NP-Za-km-z1-9]{32,44}$'
+
+    return re.match(base58_regex, contrato) is not None
+
+
+
+# Abrir las páginas en Brave
+
+def abrir_paginas_brave(contrato):
+
+    urls = [
+
+       f"https://rugcheck.xyz/tokens/{contrato}",
+
+       f"https://bullx.io/terminal?chainId=1399811149&address={contrato}"
+
     ]
-    print("Regenerando el ejecutable...")
-    resultado = subprocess.run(comando_pyinstaller)
-    if resultado.returncode == 0:
-        print("El ejecutable ha sido actualizado correctamente.")
-        return True
-    else:
-        print("Error al intentar actualizar el ejecutable.")
-        return False
 
-if __name__ == "__main__":
-    actualizado = descargar_y_actualizar()
-    if actualizado:
-        if regenerar_ejecutable():
-            print("Actualización completada. Reinicia la aplicación para usar la nueva versión.")
-            sys.exit(0)  # Salir con éxito
-        else:
-            print("Error al regenerar el ejecutable.")
-            sys.exit(1)  # Salir con error
+
+
+    brave_path = "C:/Program Files/BraveSoftware/Brave-Browser/Application/brave.exe"
+
+    webbrowser.register('brave', None, webbrowser.BackgroundBrowser(brave_path))
+
+
+
+    for url in urls:
+
+        webbrowser.get('brave').open(url)
+
+        time.sleep(1)
+
+
+
+    print(f"Páginas abiertas para el contrato: {contrato}")
+
+
+
+# Función para monitorear el portapapeles
+
+def monitorear_portapapeles(texto_contrato):
+
+    global monitoreo_activo, contenido_anterior, contratos_abiertos
+
+
+
+    while monitoreo_activo:
+
+        try:
+
+            contenido_actual = pyperclip.paste().strip()
+
+        except Exception as e:
+
+            print(f"Error al leer el portapapeles: {e}")
+
+            contenido_actual = ""
+
+
+
+        if contenido_actual != contenido_anterior and contenido_actual:
+
+            if es_contrato_valido(contenido_actual):
+
+                if contenido_actual not in contratos_abiertos:  # Validar contrato único
+
+                    contenido_anterior = contenido_actual
+
+                    contratos_abiertos.add(contenido_actual)
+
+                    texto_contrato.set(f"Contrato detectado: {contenido_actual}")
+
+                    print(f"Nuevo contrato detectado: {contenido_actual}")
+
+                    abrir_paginas_brave(contenido_actual)
+
+                else:
+
+                    texto_contrato.set("Contrato ya procesado.")
+
+            else:
+
+                texto_contrato.set("El contenido copiado no es un contrato válido.")
+
+
+
+        time.sleep(1)
+
+
+
+# Iniciar monitoreo
+
+def iniciar_monitoreo(texto_contrato):
+
+    global monitoreo_activo
+
+    if not monitoreo_activo:
+
+        monitoreo_activo = True
+
+        texto_contrato.set("Monitoreo activado.")
+
+        threading.Thread(target=monitorear_portapapeles, args=(texto_contrato,), daemon=True).start()
+
+        messagebox.showinfo("Monitoreo", "El monitoreo del portapapeles ha comenzado.")
+
     else:
-        print("No se detectaron cambios. La aplicación está actualizada.")
+
+        messagebox.showinfo("Monitoreo", "El monitoreo ya está activo.")
+
+
+
+# Pausar monitoreo
+
+def pausar_monitoreo(texto_contrato):
+
+    global monitoreo_activo
+
+    if monitoreo_activo:
+
+        monitoreo_activo = False
+
+        texto_contrato.set("Monitoreo pausado.")
+
+        messagebox.showinfo("Monitoreo", "El monitoreo del portapapeles se ha pausado.")
+
+    else:
+
+        messagebox.showinfo("Monitoreo", "El monitoreo ya está pausado.")
+
+
+
+# Salir del programa
+
+def salir(ventana):
+
+    global monitoreo_activo
+
+    monitoreo_activo = False
+
+    ventana.destroy()
+
+# Crear interfaz gráfica
+
+def crear_interfaz():
+
+    ventana = tk.Tk()
+
+    ventana.title("Fenrir v1.0 - Solana")
+
+    ventana.geometry("400x200")
+
+    
+
+    # Texto para mostrar el contrato detectado
+
+    texto_contrato = tk.StringVar()
+
+    texto_contrato.set("Estado: Esperando...")
+
+
+
+    etiqueta_contrato = tk.Label(ventana, textvariable=texto_contrato, wraplength=380, justify="center")
+
+    etiqueta_contrato.pack(pady=10)
+
+
+
+    # Botones
+
+    boton_iniciar = tk.Button(ventana, text="Iniciar Monitoreo", command=lambda: iniciar_monitoreo(texto_contrato), width=20)
+
+    boton_iniciar.pack(pady=5)
+
+
+
+    boton_pausar = tk.Button(ventana, text="Pausar Monitoreo", command=lambda: pausar_monitoreo(texto_contrato), width=20)
+
+    boton_pausar.pack(pady=5)
+
+
+
+    boton_salir = tk.Button(ventana, text="Salir", command=lambda: salir(ventana), width=20, bg="red", fg="white")
+
+    boton_salir.pack(pady=10)
+
+
+
+    ventana.mainloop()
 
 
 
