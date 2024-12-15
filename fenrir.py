@@ -1,16 +1,12 @@
+import subprocess
 import tkinter as tk
-
 from tkinter import messagebox
-
 import webbrowser
-
 import pyperclip
-
 import threading
-
 import time
-
 import re
+
 
 # Ejecutar el actualizador antes de iniciar la aplicación
 def ejecutar_updater():
