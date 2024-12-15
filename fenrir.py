@@ -1,11 +1,19 @@
 # -*- coding: utf-8 -*-
 
-import ttkbootstrap as ttk
-from ttkbootstrap.constants import *
+import subprocess
+
 import tkinter as tk
+
 from tkinter import messagebox
+
+import webbrowser
+
+import pyperclip
+
 import threading
+
 import time
+
 import re
 
 
@@ -41,7 +49,7 @@ def ejecutar_updater():
         print("Verificando actualizaciones...")
         resultado = subprocess.run(["python", "updater.py"], check=True)
         if resultado.returncode == 0:
-            print("El actualizador se ejecutó correctamente.")
+            print("El actualizador se ejecuto correctamente.")
         else:
             print("Hubo un problema con el actualizador.")
     except Exception as e:
@@ -131,7 +139,7 @@ def monitorear_portapapeles(texto_contrato):
 
         except Exception as e:
 
-            print(f"Error al leer el portapapeles: {e}")
+            print(f"Error al leer el contrato: {e}")
 
             contenido_actual = ""
 
@@ -159,7 +167,7 @@ def monitorear_portapapeles(texto_contrato):
 
             else:
 
-                texto_contrato.set("El contenido copiado no es un contrato válido.")
+                texto_contrato.set("El contenido copiado no es un contrato valido.")
 
 
 
@@ -242,29 +250,60 @@ def salir(ventana):
 # Crear interfaz gráfica
 
 def crear_interfaz():
+
     """
-    Crea la interfaz gráfica principal de la aplicación con ttkbootstrap.
+
+    Crea la interfaz gráfica principal de la aplicación.
+
     """
-    ventana = ttk.Window(themename="superhero")  # Cambia el tema aquí (ej. "cosmo", "darkly", "superhero")
+
+    ventana = tk.Tk()
+
     ventana.title("Fenrir v1.0 - Solana")
+
     ventana.geometry("400x200")
 
+
+
     # Texto para mostrar el contrato detectado
-    texto_contrato = ttk.StringVar(value="Estado: Esperando contrato de Solana...")
-    etiqueta_contrato = ttk.Label(ventana, textvariable=texto_contrato, wraplength=380, justify="center")
+
+    texto_contrato = tk.StringVar()
+
+    texto_contrato.set("Estado: Esperando contrato de Solana...")
+
+
+
+    etiqueta_contrato = tk.Label(ventana, textvariable=texto_contrato, wraplength=380, justify="center")
+
     etiqueta_contrato.pack(pady=10)
 
-    # Botones estilizados
-    boton_iniciar = ttk.Button(ventana, text="Iniciar Monitoreo", command=lambda: iniciar_monitoreo(texto_contrato), bootstyle=SUCCESS)
+
+
+    # Botones
+
+    boton_iniciar = tk.Button(ventana, text="Iniciar Monitoreo", command=lambda: iniciar_monitoreo(texto_contrato), width=20)
+
     boton_iniciar.pack(pady=5)
 
-    boton_pausar = ttk.Button(ventana, text="Pausar Monitoreo", command=lambda: pausar_monitoreo(texto_contrato), bootstyle=WARNING)
+
+
+    boton_pausar = tk.Button(ventana, text="Pausar Monitoreo", command=lambda: pausar_monitoreo(texto_contrato), width=20)
+
     boton_pausar.pack(pady=5)
 
-    boton_salir = ttk.Button(ventana, text="Salir", command=ventana.destroy, bootstyle=DANGER)
+
+
+    boton_salir = tk.Button(ventana, text="Salir", command=lambda: salir(ventana), width=20, bg="red", fg="white")
+
     boton_salir.pack(pady=10)
+
+
 
     ventana.mainloop()
 
+
+
 if __name__ == "__main__":
+
     crear_interfaz()
+
