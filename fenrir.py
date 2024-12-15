@@ -1,19 +1,11 @@
 # -*- coding: utf-8 -*-
 
-import subprocess
-
+import ttkbootstrap as ttk
+from ttkbootstrap.constants import *
 import tkinter as tk
-
 from tkinter import messagebox
-
-import webbrowser
-
-import pyperclip
-
 import threading
-
 import time
-
 import re
 
 
@@ -250,60 +242,29 @@ def salir(ventana):
 # Crear interfaz gráfica
 
 def crear_interfaz():
-
     """
-
-    Crea la interfaz gráfica principal de la aplicación.
-
+    Crea la interfaz gráfica principal de la aplicación con ttkbootstrap.
     """
-
-    ventana = tk.Tk()
-
+    ventana = ttk.Window(themename="superhero")  # Cambia el tema aquí (ej. "cosmo", "darkly", "superhero")
     ventana.title("Fenrir v1.0 - Solana")
-
     ventana.geometry("400x200")
 
-
-
     # Texto para mostrar el contrato detectado
-
-    texto_contrato = tk.StringVar()
-
-    texto_contrato.set("Estado: Esperando contrato de Solana...")
-
-
-
-    etiqueta_contrato = tk.Label(ventana, textvariable=texto_contrato, wraplength=380, justify="center")
-
+    texto_contrato = ttk.StringVar(value="Estado: Esperando contrato de Solana...")
+    etiqueta_contrato = ttk.Label(ventana, textvariable=texto_contrato, wraplength=380, justify="center")
     etiqueta_contrato.pack(pady=10)
 
-
-
-    # Botones
-
-    boton_iniciar = tk.Button(ventana, text="Iniciar Monitoreo", command=lambda: iniciar_monitoreo(texto_contrato), width=20)
-
+    # Botones estilizados
+    boton_iniciar = ttk.Button(ventana, text="Iniciar Monitoreo", command=lambda: iniciar_monitoreo(texto_contrato), bootstyle=SUCCESS)
     boton_iniciar.pack(pady=5)
 
-
-
-    boton_pausar = tk.Button(ventana, text="Pausar Monitoreo", command=lambda: pausar_monitoreo(texto_contrato), width=20)
-
+    boton_pausar = ttk.Button(ventana, text="Pausar Monitoreo", command=lambda: pausar_monitoreo(texto_contrato), bootstyle=WARNING)
     boton_pausar.pack(pady=5)
 
-
-
-    boton_salir = tk.Button(ventana, text="Salir", command=lambda: salir(ventana), width=20, bg="red", fg="white")
-
+    boton_salir = ttk.Button(ventana, text="Salir", command=ventana.destroy, bootstyle=DANGER)
     boton_salir.pack(pady=10)
-
-
 
     ventana.mainloop()
 
-
-
 if __name__ == "__main__":
-
     crear_interfaz()
-
